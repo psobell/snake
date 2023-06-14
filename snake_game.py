@@ -30,6 +30,7 @@ class SnakeGame:
         self.score = 0
         self.walls_coord = []
         self.snake_crash_wall = False
+        self.crashed = False
 
     def read_key(self, key_clicked: Optional[str])-> None:
         self.__key_clicked = key_clicked
@@ -49,22 +50,20 @@ class SnakeGame:
 
     def check_crash(self):
         '''
-        checks if snake crashes into edge, itself or a wall, returns True if so
+        checks if snake is about to crash into edge, itself or a wall, returns True if so
         '''
-        if ((self.__key_clicked == 'Left') and (self.__x < 0
-                or ((self.__x-1, self.__y) in self.body_coord))):
-            return True
-        elif ((self.__key_clicked == 'Right')
-                and (not self.__x in range(self.width)
-                or (self.__x+1, self.__y) in self.body_coord)):
-            return True
-        elif (self.__key_clicked == 'Up'
-                and (self.__y not in range(self.height)
-                or (self.__x, self.__y+1) in self.body_coord)):
-            return True
-        elif ((self.__key_clicked == 'Down') and (self.__y < 0
-                or ((self.__x, self.__y-1) in self.body_coord))):
-            return True
+        if self.__key_clicked == 'Left':
+            if self.__x == 0 or (self.__x-1, self.__y) in self.body_coord:
+                return True
+        if self.__key_clicked == 'Right':
+            if self.__x == self.width-1 or (self.__x+1, self.__y) in self.body_coord:
+                    return True
+        if self.__key_clicked == 'Up':
+            if self.__y == self.height -1 or (self.__x, self.__y+1) in self.body_coord:
+                return True
+        if self.__key_clicked == 'Down':
+            if self.__y == 0 or (self.__x, self.__y-1) in self.body_coord:
+                return True
         for wall in self.walls_coord:
             if (self.__x, self.__y) in wall:
                 return True
@@ -89,9 +88,12 @@ class SnakeGame:
         '''
         if self.turns_to_grow != 0:  # if the snake ate an apple, don't remove
             self.grew_this_turn = True  # last coordinate
-        self.valid_direction()
+        self.valid_direction()  # checks if direction is valid and change if necessary
         if not self.__key_clicked:
             self.__key_clicked = self.prev_key
+        if self.check_crash():  # if snake crashed, remove last coordinate without moving head
+            self.body_coord.pop()
+            self.crashed = True
         if (self.__key_clicked == 'Left') and not self.check_crash():
             self.__x -= 1
             self.body_coord.insert(0, (self.__x, self.__y))
@@ -124,8 +126,6 @@ class SnakeGame:
             else:
                 self.turns_to_grow -= 1
             self.prev_key = 'Down'
-        if self.check_crash():  # if snake crashed, remove head
-            self.body_coord.pop(0)
 
     def update_walls(self):
         '''
@@ -294,6 +294,6 @@ class SnakeGame:
             return True
         if self.turn == self.rounds:
             return True
-        if self.check_crash():
+        if self.crashed:
             return True
         return False
